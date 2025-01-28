@@ -13,6 +13,7 @@ const frameless = darwin ? { frame: false, titleBarStyle: "hiddenInset" } : { fr
 let prevent_splash_screen_at_startup = false;
 let splash_screen;
 const discord = require("./discord");
+const {new_win} = require("./window");
 
 // This switch is required for <input type="color"> to utilize the OS color
 // picker, which is nicer than the one that's provided by chromium. At some
@@ -141,6 +142,31 @@ async function preferences() {
 }
 menu.on("preferences", preferences);
 electron.ipcMain.on("preferences", (event) => preferences());
+
+async function open_reference_window(win) {
+    const files = electron.dialog.showOpenDialogSync(win,
+        {
+            filters: [{
+                name: "Images",
+                extensions: ["png", "jpg", "jpeg"]
+            }]
+        });
+
+    if (!files) return;
+    for (const file of files) {
+        const reference = await new_win(
+            file,
+            {
+                width: 480,
+                height: 340,
+                parent: win,
+                maximizable: false,
+                resizable: true,
+                fullscreenable: false,
+            });
+    }
+}
+menu.on("open_reference_window", open_reference_window);
 
 async function show_new_connection() {
     const new_connection = await window.static("app/html/new_connection.html", { width: 480, height: 340 }, touchbar.new_connection);
